@@ -1,7 +1,21 @@
 import React, { Component } from 'react'
 import NewsItem from './NewsItem'
+import Spinner from './Spinner';
+import PropTypes from 'prop-types'
 
 export class News extends Component {
+    static defautProps = {
+        country: "in",
+        apiKey: "9abe5b938dc848e0b51815f67816cb57",
+        pageSize: 20,
+        language: "en"
+    }
+    static propTypes = {
+        country: PropTypes.string,
+        apiKey: PropTypes.string,
+        pageSize: PropTypes.number,
+        language: PropTypes.string
+    }
     articles = [
         {
             "source": {
@@ -69,25 +83,63 @@ export class News extends Component {
             "content": "Last week, we at ESPNcricinfo did something we have been thinking of doing for eight years now: pretend-live ball-by-ball commentary for a classic cricket match. We knew the result, yes, but we tried… [+6823 chars]"
         }
     ]
-    constructor() {
-        super();
+    constructor(props) {
+        super(props);
         this.state = {
             articles: this.articles,
-            loading: false
+            loading: false,
+            page: 1
         }
+        document.title =  this.capitalize(this.props.category) + " - NewsMonkey";
+    }
+    async updateNews() {
+        let url = `https://newsapi.org/v2/top-headlines?country=${this.props.country}&apiKey=${this.props.apiKey}&language=${this.props.language}&page=${this.state.page}&pageSize=${this.props.pageSize}&category=${this.props.category}`;
+        this.setState({
+            loading: true
+        })
+        let data = await fetch(url);
+        let parsedData = await data.json();
+        console.log(parsedData);
+        this.setState({
+            articles: parsedData.articles,
+            totalResults: parsedData.totalResults,
+            loading: false
+        });
+    }
+    capitalize = (word) => {
+        let lower = word.toLowerCase();
+        return lower[0].toUpperCase() + lower.slice(1);
+    }
+    async componentDidMount() {
+        this.updateNews();
+    }
+    handlePrevClick = async () => {
+        this.setState({ page: this.state.page - 1 });
+        this.updateNews();
+    }
+    handleNextClick = async () => {
+        this.setState({ page: this.state.page + 1 });
+        this.updateNews();
     }
     render() {
         return (
             <>
                 <div className='container my-3'>
-                    <h3 style={{ color: "#867A6D", textDecoration: "underline" }}>News Monkey-Top Headlines</h3>
-                    <div className="row my-3">
-                        {this.state.articles.map((element) => {
-                            return <div className="col-md-4 my-3" key={element.url}>
-                                <NewsItem title={element.title.slice(0,45)+"..."} description={!element.description?"":element.description.slice(0,88)+"..."} imageUrl={element.urlToImage} newsUrl={element.url} />
-                            </div>
-                        })}
-                    </div>
+                    <h3 className='text-center' style={{ color: "#867A6D", textDecoration: "underline" }}>News Monkey-Top {this.capitalize(this.props.category)} Headlines</h3>
+                    {this.state.loading && <Spinner />}
+                    {!this.state.loading &&
+                        <div className="row my-3">
+                            {this.state.articles.map((element) => {
+                                return <div className="col-md-4 my-3" key={element.url}>
+                                    <NewsItem title={element.title.slice(0, 45) + "..."} description={element.description?.slice(0, 88).concat("...")} imageUrl={element.urlToImage} newsUrl={element.url} date={element.publishedAt} author={element.author} source={element.source.name} />
+                                </div>
+                            })}
+                        </div>
+                    }
+                </div>
+                <div className="container d-flex justify-content-between mb-4">
+                    <button disabled={this.state.page === 1} type="button" className="btn btn-dark" onClick={this.handlePrevClick}>&larr; Previous</button>
+                    <button disabled={this.state.page + 1 > Math.ceil(this.state.totalResults / this.props.pageSize)} type="button" className="btn btn-dark" onClick={this.handleNextClick}>Next &rarr;</button>
                 </div>
             </>
         )
