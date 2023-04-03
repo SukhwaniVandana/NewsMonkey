@@ -10,9 +10,9 @@ import {
 } from 'react-router-dom';
 import LoadingBar from 'react-top-loading-bar';
 export default class App extends Component {
-  pageSize = 5;
+  pageSize = 15;
   language = "en";
-  apiKey = "884d0bee182c4c1bb6ead4fbcd538a89";
+  apiKey = process.env.REACT_APP_NEWS_API_KEY;
 
   state = {
     progress: 0
