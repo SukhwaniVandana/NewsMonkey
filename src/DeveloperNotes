@@ -1,0 +1,4 @@
+  "homepage": "https://sukhwanivandana.github.io/NewsMonkey",
+  
+  "predeploy": "npm run build",
+  "deploy": "gh-pages -d build",
